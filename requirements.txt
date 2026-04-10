@@ -1,0 +1,28 @@
+# API clients
+openai
+anthropic
+
+# Data processing
+pandas
+numpy
+datasets
+
+# Evaluation metrics
+bert-score
+scikit-learn
+evaluate
+# Statistical analysis
+scipy
+statsmodels
+
+# Visualization
+seaborn
+matplotlib
+
+# Utilities
+tqdm
+jsonlines
+python-dotenv
+pydantic
+requests
+pyyaml
