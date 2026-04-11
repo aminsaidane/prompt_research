@@ -1,0 +1,17 @@
+[
+  {
+    "id": "C1",
+    "description": "Low constraint density (1 rule)",
+    "template": "Answer accurately. {question}"
+  },
+  {
+    "id": "C2",
+    "description": "Medium constraint density (3 rules)",
+    "template": "Answer accurately. Cite your sources. If uncertain, say 'I don't know.' {question}"
+  },
+  {
+    "id": "C3",
+    "description": "High constraint density (5 rules)",
+    "template": "Answer accurately. Cite your sources. If uncertain, say 'I don't know.' Provide step-by-step reasoning. Keep your answer under 100 words. Avoid speculation. {question}"
+  }
+]

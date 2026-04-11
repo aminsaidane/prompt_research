@@ -1,0 +1,17 @@
+[
+  {
+    "id": "L1",
+    "description": "Short instruction",
+    "template": "Answer the following question. {question}"
+  },
+  {
+    "id": "L2",
+    "description": "Medium instruction",
+    "template": "Provide a clear and accurate answer to the following question. {question}"
+  },
+  {
+    "id": "L3",
+    "description": "Long instruction",
+    "template": "Provide a clear, detailed, and well-structured answer to the following question. Explain your reasoning if necessary and ensure your answer is accurate. {question}"
+  }
+]

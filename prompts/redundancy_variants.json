@@ -1,0 +1,17 @@
+[
+  {
+    "id": "R1",
+    "description": "No redundancy",
+    "template": "Cite your sources. {question}"
+  },
+  {
+    "id": "R2",
+    "description": "Medium redundancy",
+    "template": "Cite your sources. Please remember to include references for any factual claims. {question}"
+  },
+  {
+    "id": "R3",
+    "description": "High redundancy",
+    "template": "Cite your sources. It is important to include references. Always provide citations for factual statements you make. Do not forget to cite your sources. {question}"
+  }
+]
