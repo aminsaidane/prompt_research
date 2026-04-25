@@ -1,0 +1,76 @@
+experiment:
+  temperature: 0.0
+  max_tokens: 512
+  random_seed: 42
+  repetition: 1
+
+
+datasets:
+  mmlu:
+    file: "datasets/mmlu_subset.json"
+    samples: 600
+    subset_seed: 42
+
+  gsm8k:
+    file: "datasets/gsm8k_subset.json"
+    samples: 500
+    subset_seed: 42
+
+  truthfulqa:
+    file: "datasets/truthfulqa_subset.json"
+    samples: 500
+    subset_seed: 42
+
+  halueval:
+    file: "datasets/halueval_subset.json"
+    samples: 500
+    subset_seed: 42
+
+
+models:
+  # =========================
+  # LOCAL MODELS (OLLAMA)
+  # =========================
+  - name: "llama3"
+    type: "local"
+    enabled: true
+
+  - name: "mistral"
+    type: "local"
+    enabled: true
+
+  - name: "qwen2.5"
+    type: "local"
+    enabled: true
+
+
+  # =========================
+  # API MODELS (OPTIONAL)
+  # =========================
+  - name: "gpt4o"
+    type: "api"
+    enabled: false
+
+  - name: "claude3"
+    type: "api"
+    enabled: false
+
+
+prompts:
+  length:
+    file: "prompts/length_variants.json"
+    variants: ["L1", "L2", "L3"]
+
+  redundancy:
+    file: "prompts/redundancy_variants.json"
+    variants: ["R1", "R2", "R3"]
+
+  density:
+    file: "prompts/density_variants.json"
+    variants: ["C1", "C2", "C3"]
+
+
+outputs:
+  raw_responses: "outputs/raw_responses/"
+  metrics: "outputs/metrics/"
+  figures: "outputs/figures/"
