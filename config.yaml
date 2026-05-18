@@ -1,6 +1,6 @@
 experiment:
   temperature: 0.0
-  max_tokens: 512
+  max_tokens: 256   # 🔥 reduced for speed (very important)
   random_seed: 42
   repetition: 1
 
@@ -8,22 +8,22 @@ experiment:
 datasets:
   mmlu:
     file: "datasets/mmlu_subset.json"
-    samples: 600
+    samples: 100    # 🔥 reduced from 600
     subset_seed: 42
 
   gsm8k:
     file: "datasets/gsm8k_subset.json"
-    samples: 500
+    samples: 100    # 🔥 reduced from 500
     subset_seed: 42
 
   truthfulqa:
     file: "datasets/truthfulqa_subset.json"
-    samples: 500
+    samples: 100    # 🔥 reduced from 500
     subset_seed: 42
 
   halueval:
     file: "datasets/halueval_subset.json"
-    samples: 500
+    samples: 100    # 🔥 reduced from 500
     subset_seed: 42
 
 
@@ -31,15 +31,15 @@ models:
   # =========================
   # LOCAL MODELS (OLLAMA)
   # =========================
-  - name: "llama3"
+  - name: "llama3:8b"   # 🔥 match your installed model
     type: "local"
     enabled: true
 
-  - name: "mistral"
+  - name: "mistral:latest"
     type: "local"
     enabled: true
 
-  - name: "qwen2.5"
+  - name: "qwen2.5:7b"
     type: "local"
     enabled: true
 
