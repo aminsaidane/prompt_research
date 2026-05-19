@@ -1,0 +1,7 @@
+scope,group,f_statistic,p_value,significant
+model_prompt_type,llama3:8b,7.5065917309388235,0.0005581015333911703,True
+model_prompt_type,mistral:latest,14.813563336791232,3.916530681967852e-07,True
+model_prompt_type,qwen2.5:7b,3.5371551586668994,0.029197230895524326,True
+prompt_variant,density,5.064253654045367,0.00636375291238643,True
+prompt_variant,length,5.373864686386959,0.004673475951810426,True
+prompt_variant,redundancy,0.057354699832575996,0.9442599449564171,False

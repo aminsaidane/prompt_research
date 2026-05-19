@@ -1,0 +1,4 @@
+model,density,length,redundancy
+llama3:8b,0.25,0.2392,0.3042
+mistral:latest,0.2425,0.2217,0.3142
+qwen2.5:7b,0.2225,0.235,0.2675

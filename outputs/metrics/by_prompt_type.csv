@@ -1,0 +1,4 @@
+prompt_type,accuracy,hallucination_rate,response_length
+density,0.2383,0.0045,101.665
+length,0.2319,0.0057,129.5242
+redundancy,0.2953,0.0029,134.7397
