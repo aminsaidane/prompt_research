@@ -1,5 +1,5 @@
 dataset,accuracy,hallucination_rate,response_length
-gsm8k,0.0,0.0001,129.46
-halueval,0.3459,0.0158,85.78
-mmlu,0.6578,0.0,137.1393
-truthfulqa,0.017,0.0016,135.5259
+gsm8k,0.0,0.4139,129.46
+halueval,0.3459,0.4433,85.78
+mmlu,0.6578,0.3472,137.1393
+truthfulqa,0.017,0.3822,135.5259

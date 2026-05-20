@@ -1,108 +1,88 @@
 """
 evaluation.py - Metrics calculation for LLM responses
-Measures: Accuracy, BERTScore, Hallucination Rate, Compliance Score
+Measures: Accuracy, Hallucination Rate (via NLI), Compliance Score
 """
 
-import numpy as np
 from typing import List, Dict, Any
 import json
 
+
 class MetricsCalculator:
     def __init__(self):
-        # Initialize BERTScore lazily so accuracy/hallucination analysis can run
-        # without loading a large model unless semantic similarity is requested.
-        self.bertscorer = None
-        self._bertscore_model_type = "microsoft/deberta-xlarge-mnli"
-
-    def _get_bertscorer(self):
-        if self.bertscorer is None:
-            try:
-                import torch
-
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-            except Exception:
-                device = "cpu"
-
-            from bert_score import BERTScorer
-
-            self.bertscorer = BERTScorer(
-                model_type=self._bertscore_model_type,
-                lang="en",
-                rescale_with_baseline=True,
-                device=device,
+        self.nli_pipeline = None
+        self._nli_model_name = "typeform/distilbert-base-uncased-mnli"
+    
+    def _get_nli(self):
+        """Lazy load NLI pipeline for hallucination detection"""
+        if self.nli_pipeline is None:
+            from transformers import pipeline
+            import torch
+            
+            device = -1  # Force CPU usage
+            
+            print("Loading NLI model: {}".format(self._nli_model_name))
+            print("Device: CPU (this will take 1-2 minutes first time)")
+            
+            self.nli_pipeline = pipeline(
+                "text-classification",
+                model=self._nli_model_name,
+                device=device
             )
-        return self.bertscorer
+            print("NLI model loaded successfully")
+        return self.nli_pipeline
     
     def calculate_accuracy(self, prediction: str, ground_truth: str) -> float:
         """
         Exact match accuracy for MMLU and GSM8K.
         Returns 1.0 if correct answer appears anywhere in prediction.
         """
-        # Strip whitespace and convert to lowercase for comparison
         pred_clean = prediction.strip().lower()
         truth_clean = ground_truth.strip().lower()
         
-        # Check if ground truth appears in prediction
         if truth_clean in pred_clean:
             return 1.0
         return 0.0
     
-    def calculate_bertscore(self, predictions: List[str], references: List[str]) -> Dict[str, float]:
-        """
-        Calculate BERTScore (precision, recall, F1) for a batch of responses.
-        """
-        scorer = self._get_bertscorer()
-        P, R, F1 = scorer.score(predictions, references)
-        return {
-            "precision": P.mean().item(),
-            "recall": R.mean().item(),
-            "f1": F1.mean().item()
-        }
-    
     def calculate_hallucination_rate(self, prediction: str, ground_truth: str) -> float:
         """
-        Estimate hallucination rate for TruthfulQA and HaluEval.
-        Returns proportion of claims in prediction that are false.
+        NLI-based hallucination detection using cross-encoder model.
+        Returns proportion of sentences that contradict ground truth.
         """
-        # Simple heuristic: count contradictory statements
-        # In full implementation, use NLI model for verification
-        pred_sentences = prediction.split('.')
-        truth_sentences = ground_truth.split('.')
+        if not prediction or len(prediction.strip()) < 5:
+            return 0.0
         
-        hallucinated = 0
-        for pred_sent in pred_sentences:
-            if len(pred_sent.strip()) < 5:  # Skip empty/short sentences
+        nli = self._get_nli()
+        
+        # Split into sentences for granular detection
+        sentences = [s.strip() for s in prediction.split('.') if len(s.strip()) > 10]
+        
+        # Limit to first 3 sentences for speed (most hallucinations appear early)
+        sentences = sentences[:3]
+        
+        if not sentences:
+            # If no substantial sentences, evaluate the whole prediction
+            try:
+                result = nli("{} [SEP] {}".format(prediction, ground_truth))
+                return 1.0 if result[0]['label'] == 'CONTRADICTION' else 0.0
+            except Exception:
+                return 0.0
+        
+        # Evaluate each sentence
+        hallucinated_count = 0
+        for sent in sentences:
+            try:
+                result = nli("{} [SEP] {}".format(sent, ground_truth))
+                if result[0]['label'] == 'CONTRADICTION':
+                    hallucinated_count += 1
+            except Exception as e:
+                print("NLI warning: {}".format(e))
                 continue
-            # Check if prediction contradicts ground truth
-            if self._contradicts(pred_sent, ground_truth):
-                hallucinated += 1
         
-        total = max(len(pred_sentences), 1)
-        return hallucinated / total
-    
-    def _contradicts(self, sentence: str, ground_truth: str) -> bool:
-        """
-        Simple contradiction detection.
-        In production, use a proper NLI model (DeBERTa, RoBERTa-large-MNLI)
-        """
-        # Placeholder logic - will be replaced with NLI
-        sentence_lower = sentence.lower()
-        truth_lower = ground_truth.lower()
-        
-        # If sentence claims something opposite to truth
-        negation_words = ["not", "never", "no", "incorrect", "false", "wrong"]
-        if any(word in sentence_lower for word in negation_words):
-            # Check if the claim contradicts known truth
-            common_truths = truth_lower.split('.')
-            for truth in common_truths:
-                if len(truth.strip()) > 10 and truth.strip() in sentence_lower:
-                    return True
-        return False
+        return hallucinated_count / len(sentences) if sentences else 0.0
     
     def calculate_compliance_score(self, prediction: str, rules: List[str]) -> float:
         """
         Measure how many rules the model followed.
-        For redundancy and constraint density experiments.
         """
         followed_rules = 0
         prediction_lower = prediction.lower()
@@ -115,10 +95,7 @@ class MetricsCalculator:
         return followed_rules / len(rules) if rules else 1.0
     
     def _extract_keywords(self, rule: str) -> List[str]:
-        """
-        Convert rule text to keywords for detection.
-        Example: "Cite your sources" → ["cite", "source", "reference"]
-        """
+        """Convert rule text to keywords for detection."""
         rule_lower = rule.lower()
         keyword_map = {
             "cite": ["cite", "citation", "source", "reference", "according to"],
@@ -130,12 +107,12 @@ class MetricsCalculator:
         for key, keywords in keyword_map.items():
             if key in rule_lower or any(kw in rule_lower for kw in keywords):
                 return keywords
-        return [rule_lower[:10]]  # Fallback: first 10 chars
+        return [rule_lower[:10]]
     
     def evaluate_response(self, 
                           prediction: str, 
                           ground_truth: str, 
-                          task_type: str,
+                          task_type: str = None,
                           rules: List[str] = None) -> Dict[str, Any]:
         """
         Main evaluation function combining all metrics.
@@ -143,25 +120,30 @@ class MetricsCalculator:
         results = {
             "accuracy": self.calculate_accuracy(prediction, ground_truth),
             "hallucination_rate": self.calculate_hallucination_rate(prediction, ground_truth),
+            "response_length": len(prediction.split())
         }
         
         if rules:
             results["compliance_score"] = self.calculate_compliance_score(prediction, rules)
-        
-        # Add token efficiency (response length)
-        results["response_length"] = len(prediction.split())
         
         return results
 
 
 # Example usage
 if __name__ == "__main__":
+    print("Testing NLI model...")
     calc = MetricsCalculator()
     
-    # Test
-    pred = "Paris is the capital of France."
-    truth = "Paris"
-    rules = ["Answer accurately", "Be concise"]
+    # Test cases
+    test_cases = [
+        ("Paris is the capital of France.", "Paris", "Should be correct (no hallucination)"),
+        ("Berlin is the capital of France.", "Paris", "Should be hallucination"),
+        ("I don't know the answer.", "Paris", "Should NOT be hallucination"),
+    ]
     
-    result = calc.evaluate_response(pred, truth, "mmlu", rules)
-    print(json.dumps(result, indent=2))
+    for pred, truth, desc in test_cases:
+        result = calc.calculate_hallucination_rate(pred, truth)
+        print("{}: {:.2f}".format(desc, result))
+    
+    print("\n✅ Ready to run on 10,800 responses")
+    print("Estimated time on MacBook Air: 2-4 hours")

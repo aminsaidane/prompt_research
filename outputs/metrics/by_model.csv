@@ -1,4 +1,4 @@
 model,accuracy,hallucination_rate,response_length
-llama3:8b,0.2644,0.0048,127.3456
-mistral:latest,0.2594,0.0049,107.0219
-qwen2.5:7b,0.2417,0.0035,131.5614
+llama3:8b,0.2644,0.3997,127.3456
+mistral:latest,0.2594,0.4085,107.0219
+qwen2.5:7b,0.2417,0.3817,131.5614

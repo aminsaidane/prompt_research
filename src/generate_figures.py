@@ -48,6 +48,7 @@ def generate_all_figures():
     sns.set_style("whitegrid")
     plt.rcParams["figure.figsize"] = (10, 6)
 
+    # Figure 1: Accuracy by Model and Prompt Type
     fig1, ax = plt.subplots()
     pivot = df.pivot_table(index="model", columns="prompt_type", values="accuracy", aggfunc="mean")
     pivot.plot(kind="bar", ax=ax)
@@ -64,19 +65,26 @@ def generate_all_figures():
     plt.savefig(FIGURES_DIR / "accuracy_by_model_prompt.png", dpi=300)
     plt.close(fig1)
 
+    # Figure 2: Hallucination Rate by Prompt Variant (FIXED)
     fig2, ax = plt.subplots()
     hall_by_prompt = df.groupby("prompt_id")["hallucination_rate"].mean().sort_values()
     hall_by_prompt.plot(kind="bar", ax=ax, color="coral")
     ax.set_title("Hallucination Rate by Prompt Variant")
     ax.set_ylabel("Hallucination Rate")
     ax.set_xlabel("Prompt Variant")
-    ax.set_ylim([0, 0.02])
-    ax.yaxis.set_major_locator(MultipleLocator(0.0025))
+    # FIXED: Set y-axis limit to 0-0.6 (for 0-60% hallucination rates)
+    ax.set_ylim([0, 0.6])
+    ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.yaxis.set_major_formatter(FormatStrFormatter("%.3f"))
+    # Add horizontal line at overall mean
+    overall_mean = df["hallucination_rate"].mean()
+    ax.axhline(y=overall_mean, color='black', linestyle='--', alpha=0.7, label=f'Overall: {overall_mean:.3f}')
+    ax.legend()
     plt.tight_layout()
     plt.savefig(FIGURES_DIR / "hallucination_by_prompt.png", dpi=300)
     plt.close(fig2)
 
+    # Figure 3: Accuracy by Constraint Density
     fig3, ax = plt.subplots()
     density_df = df[df["prompt_id"].isin(["C1", "C2", "C3"])]
     sns.boxplot(data=density_df, x="prompt_id", y="accuracy", ax=ax, palette="Blues")
@@ -90,6 +98,7 @@ def generate_all_figures():
     plt.savefig(FIGURES_DIR / "accuracy_by_density.png", dpi=300)
     plt.close(fig3)
 
+    # Figure 4: Accuracy by Redundancy Level
     fig4, ax = plt.subplots()
     redundancy_df = df[df["prompt_id"].isin(["R1", "R2", "R3"])]
     sns.boxplot(data=redundancy_df, x="prompt_id", y="accuracy", ax=ax, palette="Greens")
@@ -103,6 +112,7 @@ def generate_all_figures():
     plt.savefig(FIGURES_DIR / "accuracy_by_redundancy.png", dpi=300)
     plt.close(fig4)
 
+    # Figure 5: Length Prompts - Accuracy by Dataset Heatmap
     length_df = df[df["prompt_type"] == "length"].copy()
     length_scores = (
         length_df.assign(prompt_group=length_df["prompt_id"])[["prompt_group", "accuracy"]]
@@ -120,11 +130,13 @@ def generate_all_figures():
     plt.savefig(FIGURES_DIR / "length_accuracy_heatmap.png", dpi=300)
     plt.close(fig5)
 
+    # Figure 6: Accuracy by Dataset
     fig6, ax = plt.subplots()
     dataset_acc = df.groupby("dataset")["accuracy"].mean().sort_values()
     dataset_acc.plot(kind="bar", ax=ax, color="purple")
     ax.set_title("Accuracy by Dataset")
     ax.set_ylabel("Accuracy")
+    ax.set_xlabel("Dataset")
     ax.set_ylim([0, 0.7])
     ax.yaxis.set_major_locator(MultipleLocator(0.05))
     ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
@@ -133,6 +145,12 @@ def generate_all_figures():
     plt.close(fig6)
 
     print("✅ All figures saved to outputs/figures/")
+    print(f"   - accuracy_by_model_prompt.png")
+    print(f"   - hallucination_by_prompt.png")
+    print(f"   - accuracy_by_density.png")
+    print(f"   - accuracy_by_redundancy.png")
+    print(f"   - length_accuracy_heatmap.png")
+    print(f"   - accuracy_by_dataset.png")
 
 
 if __name__ == "__main__":
